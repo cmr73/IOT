@@ -39,7 +39,7 @@ String postStr = apiKey;
 postStr +="&field1=";
 postStr += String(value);
 postStr += "\r\n\r\n";
-client.print("POST /update HTTP/1.1\n");
+client.print("POST /update HTTP/1.1\n");
 client.print("Host: api.thingspeak.com\n");
 client.print("Connection: close\n");
 client.print("X-THINGSPEAKAPIKEY: "+apiKey+"\n");
@@ -49,7 +49,7 @@ client.print(postStr.length());
 client.print("\n\n");
 client.print(postStr);
 client.stop();
-Serial.println("Waiting...");
-delay(1000);
+Serial.println("Waiting...");
+delay(1000);
 }
 }
