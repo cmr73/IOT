@@ -1,68 +1,55 @@
 #include <ESP8266WiFi.h>
-#include "secrets.h"
-#include "ThingSpeak.h" // always include thingspeak header file after other header files and custom macros
-
-char ssid[] = SECRET_SSID;   // your network SSID (name) 
-char pass[] = SECRET_PASS;   // your network password
-int keyIndex = 0;            // your network key Index number (needed only for WEP)
-WiFiClient  client;
-
-unsigned long myChannelNumber = SECRET_CH_ID;
-const char * myWriteAPIKey = SECRET_WRITE_APIKEY;
-
-int number = 0;
-int IRPIN = D3;
-void setup() {
-  Serial.begin(115200);  // Initialize serial
-  while (!Serial) {
-    ; // wait for serial port to connect. Needed for Leonardo native USB port only
-  }
-  
-  WiFi.mode(WIFI_STA); 
-  ThingSpeak.begin(client);  // Initialize ThingSpeak
+String apiKey = "PFFHC1B2IRN0GGQ0";// Your WRITE API KEY      
+const char *ssid =  “kunal";       // Your mobile Hotspot Name    
+const char *pass =  “12345678";    // Your Mobile Hotspot Password
+const char* server = "api.thingspeak.com";
+#define IRpin D4         
+WiFiClient client;
+int value; 
+void setup() 
+{
+Serial.begin(115200);
+pinMode(IRpin, INPUT); 
+delay(1000);
+Serial.println("Connecting to ");
+Serial.println(ssid);
+WiFi.begin(ssid, pass);
+while (WiFi.status() != WL_CONNECTED)
+{
+delay(2000);
+Serial.print(".");
 }
-
-void loop() {
-
-  // Connect or reconnect to WiFi
-  if(WiFi.status() != WL_CONNECTED){
-    Serial.print("Attempting to connect to SSID: ");
-    Serial.println(SECRET_SSID);
-    while(WiFi.status() != WL_CONNECTED){
-      WiFi.begin(ssid, pass);  // Connect to WPA/WPA2 network. Change this line if using open or WEP network
-      Serial.print(".");
-      delay(5000);     
-    } 
-    Serial.println("\nConnected.");
-  }
-  
-  // Write to ThingSpeak. There are up to 8 fields in a channel, allowing you to store up to 8 different
-  // pieces of information in a channel.  Here, we write to field 1.
-  int x = ThingSpeak.writeField(myChannelNumber, 1, number, myWriteAPIKey);
-  if(x == 200){
-    Serial.println("Channel update successful.");
-  }
-  else{
-    Serial.println("Problem updating channel. HTTP error code " + String(x));
-  }
-
-  // change the value
-  number++;
-  if(number > 99){
-    number = 0;
-  }
-  
-  delay(20000); // Wait 20 seconds to update the channel again
+Serial.println("   ");
+Serial.println("WiFi connected");
 }
-
-
-SECRET.H
-
-// Use this file to store all of the private credentials 
-// and connection details
-
-#define SECRET_SSID "MySSID"		// replace MySSID with your WiFi network name
-#define SECRET_PASS "MyPassword"	// replace MyPassword with your WiFi password
-
-#define SECRET_CH_ID 000000			// replace 0000000 with your channel number
-#define SECRET_WRITE_APIKEY "XYZ"   // replace XYZ with your channel write API Key
+void loop(){
+ value = digitalRead(IRpin);           
+Serial.println(value);
+  if(value==0) 
+  {
+  Serial.print("object detected");
+  }
+  else
+  {
+  Serial.print("no object detected");
+  }
+if (client.connect(server,80))   
+{
+String postStr = apiKey;
+postStr +="&field1=";
+postStr += String(value);
+postStr += "\r\n\r\n";
+client.print("POST /update HTTP/1.1\n");
+client.print("Host: api.thingspeak.com\n");
+client.print("Connection: close\n");
+client.print("X-THINGSPEAKAPIKEY: "+apiKey+"\n");
+client.print("Content-Type: application/x-www-form-urlencoded\n");
+client.print("Content-Length: ");
+client.print(postStr.length());
+client.print("\n\n");
+client.print(postStr);
+client.stop();
+Serial.println("Waiting...");
+delay(1000);
+}
+}
